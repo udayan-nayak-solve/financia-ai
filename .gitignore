@@ -1,5 +1,8 @@
 !data/
 !data/**
+!loan_prediction_system/models/
+!loan_prediction_system/models/**
 
 .DS_Store
 data/**/.DS_Store
+loan_prediction_system/models/**/.DS_Store

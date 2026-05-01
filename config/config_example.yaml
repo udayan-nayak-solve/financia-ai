@@ -1,0 +1,493 @@
+# ============================================================================
+# Lending Opportunity Platform - Configuration File
+# ============================================================================
+# This file contains all configurable parameters for the platform.
+# Copy this to config.yaml and customize for your institution.
+
+project:
+  name: "Lending Opportunity Platform"
+  version: "1.0.0"
+  description: "AI-powered lending opportunity identification"
+  
+# ============================================================================
+# FILE PATHS
+# ============================================================================
+paths:
+  data_raw: "data/raw"              # Raw input data location
+  data_processed: "data/processed"  # Cleaned data output
+  models: "data/models"             # Trained model storage
+  outputs: "data/outputs"           # Prediction results
+  logs: "logs"                      # Application logs
+
+# ============================================================================
+# DATA SOURCES CONFIGURATION
+# ============================================================================
+data_sources:
+  # HMDA (Home Mortgage Disclosure Act) Data
+  hmda:
+    filename: "hmda_data.csv"
+    description: "Loan-level lending data from financial institutions"
+    required_columns:
+      - "census_tract"        # Geographic identifier (11 digits)
+      - "county_code"         # First 5 digits of census_tract
+      - "loan_amount"         # Loan amount in dollars
+      - "applicant_income"    # Borrower income in thousands
+      - "loan_type"           # 1=Conventional, 2=FHA, 3=VA, 4=FSA/RHS
+      - "action_taken"        # 1=Originated, 2=Approved not accepted, 3=Denied
+      - "lender_name"         # Financial institution name
+      - "loan_purpose"        # 1=Purchase, 2=Refinance, 3=Home Improvement
+    optional_columns:
+      - "borrower_race"
+      - "borrower_ethnicity"
+      - "borrower_sex"
+      - "loan_to_value_ratio"
+  
+  # GSE (Government-Sponsored Enterprise) Data
+  gse:
+    filename: "gse_data.csv"
+    description: "Fannie Mae/Freddie Mac loan performance data"
+    required_columns:
+      - "census_tract"              # Geographic identifier
+      - "original_loan_amount"      # Original loan amount
+      - "original_interest_rate"    # Interest rate at origination
+      - "loan_term"                 # Loan term in months (360, 240, 180)
+      - "ltv_ratio"                 # Loan-to-value ratio (0-100)
+      - "dti_ratio"                 # Debt-to-income ratio (0-100)
+      - "borrower_credit_score"     # FICO score (300-850)
+    optional_columns:
+      - "first_payment_date"
+      - "maturity_date"
+      - "number_of_borrowers"
+      - "occupancy_status"
+  
+  # HPI (House Price Index) Data
+  hpi:
+    filename: "hpi_data.csv"
+    description: "FHFA House Price Index data"
+    required_columns:
+      - "census_tract"    # Geographic identifier
+      - "year"            # Year (2020, 2021, etc.)
+      - "quarter"         # Quarter (1, 2, 3, 4)
+      - "hpi_value"       # Index value (base 100)
+    optional_columns:
+      - "month"           # If monthly data available
+  
+  # Unemployment Data
+  unemployment:
+    filename: "unemployment_data.csv"
+    description: "BLS unemployment statistics"
+    required_columns:
+      - "county_code"         # 5-digit county code
+      - "year"                # Year
+      - "month"               # Month (1-12)
+      - "unemployment_rate"   # Unemployment rate (0-100)
+    optional_columns:
+      - "labor_force"
+      - "employed"
+      - "unemployed"
+  
+  # Census Demographic Data
+  census:
+    filename: "census_data.csv"
+    description: "Census/ACS demographic data"
+    required_columns:
+      - "census_tract"    # Geographic identifier
+      - "population"      # Total population
+      - "median_income"   # Median household income
+      - "median_age"      # Median age
+    optional_columns:
+      - "owner_occupied_pct"
+      - "renter_occupied_pct"
+      - "poverty_rate"
+      - "education_bachelors_pct"
+
+# ============================================================================
+# FEATURE ENGINEERING
+# ============================================================================
+feature_engineering:
+  # Features derived from HMDA data
+  hmda_features:
+    - "loan_volume"              # Total number of loans
+    - "approval_rate"            # Percentage of approved applications
+    - "avg_loan_amount"          # Average loan size
+    - "median_loan_amount"       # Median loan size
+    - "denial_rate"              # Percentage of denied applications
+    - "market_concentration"     # Herfindahl index of lender concentration
+    - "num_lenders"              # Number of active lenders
+    - "client_market_share"      # Your bank's market share
+    - "client_loan_count"        # Your bank's loan count
+    - "purchase_pct"             # Percentage for home purchase
+    - "refinance_pct"            # Percentage for refinancing
+  
+  # Features derived from economic indicators
+  economic_features:
+    - "hpi_growth_1yr"           # 1-year HPI growth rate
+    - "hpi_growth_3yr"           # 3-year HPI growth rate
+    - "hpi_volatility"           # Standard deviation of HPI changes
+    - "current_hpi"              # Current HPI value
+    - "unemployment_trend"       # Trend in unemployment (+ = worsening)
+    - "unemployment_change_1yr"  # Change from 1 year ago
+    - "current_unemployment"     # Current unemployment rate
+    - "income_per_capita"        # Income per person
+  
+  # Features derived from GSE data
+  gse_features:
+    - "gse_loan_count"          # Number of GSE loans
+    - "avg_gse_loan_amount"     # Average GSE loan size
+    - "avg_interest_rate"       # Average interest rate
+    - "avg_loan_term"           # Average loan term
+    - "avg_ltv"                 # Average loan-to-value ratio
+    - "avg_dti"                 # Average debt-to-income ratio
+    - "avg_credit_score"        # Average borrower credit score
+    - "median_credit_score"     # Median borrower credit score
+
+# ============================================================================
+# MACHINE LEARNING MODEL CONFIGURATION
+# ============================================================================
+model:
+  opportunity_scoring:
+    model_type: "ensemble"      # Options: xgboost, random_forest, ensemble
+    test_size: 0.2              # Percentage of data for testing (0.2 = 20%)
+    random_state: 42            # Random seed for reproducibility
+    cv_folds: 5                 # Number of cross-validation folds
+    
+  # Hyperparameters for each model type
+  hyperparameters:
+    # XGBoost parameters
+    xgboost:
+      n_estimators: 100         # Number of boosting rounds
+      max_depth: 6              # Maximum tree depth
+      learning_rate: 0.1        # Step size shrinkage (0.01-0.3)
+      subsample: 0.8            # Fraction of samples for each tree
+      colsample_bytree: 0.8     # Fraction of features for each tree
+      min_child_weight: 1       # Minimum sum of instance weight
+      gamma: 0                  # Minimum loss reduction for split
+    
+    # Random Forest parameters
+    random_forest:
+      n_estimators: 100         # Number of trees
+      max_depth: 10             # Maximum tree depth (None = unlimited)
+      min_samples_split: 5      # Minimum samples to split node
+      min_samples_leaf: 2       # Minimum samples in leaf node
+      max_features: "sqrt"      # Features to consider for split
+    
+    # Gradient Boosting parameters (for ensemble)
+    gradient_boosting:
+      n_estimators: 100
+      max_depth: 5
+      learning_rate: 0.1
+      subsample: 0.8
+
+# ============================================================================
+# OPPORTUNITY SCORING CONFIGURATION
+# ============================================================================
+scoring:
+  # Weights for different scoring components (must sum to 1.0)
+  weights:
+    market_opportunity: 0.35    # Weight for market size and penetration
+    economic_indicators: 0.25   # Weight for economic health signals
+    competition_level: 0.20     # Weight for competitive dynamics
+    risk_factors: 0.20          # Weight for risk assessment
+  
+  # Thresholds for opportunity categories
+  thresholds:
+    high_opportunity: 0.7       # Score >= 70 = High/Very High opportunity
+    medium_opportunity: 0.4     # Score 40-69 = Medium opportunity
+    low_opportunity: 0.0        # Score < 40 = Low opportunity
+  
+  # Component-specific parameters
+  market_opportunity:
+    weight_volume: 0.4          # Weight for loan volume in market component
+    weight_share: 0.6           # Weight for market share gap
+  
+  economic_indicators:
+    hpi_weight: 0.5             # Weight for HPI growth
+    unemployment_weight: 0.3    # Weight for unemployment trends
+    income_weight: 0.2          # Weight for income levels
+  
+  risk_factors:
+    denial_rate_weight: 0.3     # Weight for denial rates
+    unemployment_weight: 0.3    # Weight for unemployment risk
+    volatility_weight: 0.2      # Weight for HPI volatility
+    ltv_weight: 0.2             # Weight for LTV risk
+
+# ============================================================================
+# ANALYSIS PARAMETERS
+# ============================================================================
+analysis:
+  top_n_markets: 10             # Number of top opportunities to highlight
+  min_loan_volume: 10           # Minimum loans required for analysis
+  competitor_threshold: 3       # Minimum competitors for valid market
+  
+  # Geographic filters (optional)
+  geographic_filters:
+    states: []                  # List of state codes to include (empty = all)
+    counties: []                # List of county codes to include (empty = all)
+    exclude_tracts: []          # List of census tracts to exclude
+  
+  # Market size categories
+  market_size_categories:
+    small: 50                   # < 50 loans
+    medium: 200                 # 50-200 loans
+    large: 200                  # > 200 loans
+
+# ============================================================================
+# DASHBOARD CONFIGURATION
+# ============================================================================
+dashboard:
+  title: "Lending Opportunity Platform"
+  page_icon: "🏦"
+  layout: "wide"
+  
+  # Display options
+  display:
+    max_tracts_per_page: 50     # Maximum tracts to display at once
+    default_chart_height: 400   # Default chart height in pixels
+    show_raw_data: true         # Allow users to see raw data tables
+  
+  # Filter defaults
+  filters:
+    default_category: "All"     # Default opportunity category filter
+    enable_geographic: true     # Enable geographic filters
+    enable_score_range: true    # Enable score range slider
+
+# ============================================================================
+# LOGGING CONFIGURATION
+# ============================================================================
+logging:
+  level: "INFO"                 # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {module}:{function}:{line} | {message}"
+  rotation: "100 MB"            # Rotate logs when file reaches this size
+  retention: "30 days"          # Keep logs for this duration
+  console_output: true          # Also print logs to console
+  
+  # Log file names
+  files:
+    main: "application.log"
+    training: "training_{time}.log"
+    errors: "errors.log"
+
+# ============================================================================
+# PERFORMANCE TUNING
+# ============================================================================
+performance:
+  # Memory management
+  chunk_size: 10000             # Process data in chunks of this size
+  max_memory_gb: 8              # Maximum memory usage (GB)
+  
+  # Parallel processing
+  n_jobs: -1                    # Number of CPU cores (-1 = all available)
+  enable_multiprocessing: true  # Use multiprocessing for data loading
+  
+  # Caching
+  enable_caching: true          # Cache processed data
+  cache_ttl: 3600               # Cache time-to-live (seconds)
+
+# ============================================================================
+# ADVANCED OPTIONS
+# ============================================================================
+advanced:
+  # Feature selection
+  feature_selection:
+    enabled: false              # Enable automatic feature selection
+    method: "recursive"         # Options: recursive, importance, correlation
+    n_features: 20              # Number of features to select
+  
+  # Model ensemble
+  ensemble:
+    voting_method: "soft"       # Options: soft (weighted average), hard (majority vote)
+    weights: [0.4, 0.3, 0.3]   # Weights for [xgboost, random_forest, gradient_boosting]
+  
+  # Cross-validation
+  cross_validation:
+    strategy: "kfold"           # Options: kfold, stratified, timeseries
+    shuffle: true               # Shuffle data before splitting
+    
+  # Outlier detection
+  outlier_detection:
+    enabled: true               # Remove outliers during preprocessing
+    method: "iqr"               # Options: iqr, zscore, isolation_forest
+    threshold: 3.0              # Standard deviations (for zscore)
+  
+  # Missing data handling
+  missing_data:
+    strategy: "fill_zero"       # Options: fill_zero, fill_mean, fill_median, drop
+    max_missing_pct: 0.3        # Drop features with > 30% missing values
+
+# ============================================================================
+# COMPLIANCE & REPORTING
+# ============================================================================
+compliance:
+  # CRA (Community Reinvestment Act) considerations
+  cra:
+    track_low_moderate_income: true   # Track LMI areas
+    lmi_income_threshold: 0.8         # 80% of area median income
+    
+  # Fair lending
+  fair_lending:
+    monitor_demographics: false       # Monitor for disparate impact
+    protected_classes: []             # List of protected classes to monitor
+  
+  # Reporting
+  reporting:
+    generate_summary: true            # Generate executive summary
+    include_visualizations: true      # Include charts in reports
+    export_format: "pdf"              # Options: pdf, html, docx
+
+# ============================================================================
+# NOTIFICATIONS & ALERTS
+# ============================================================================
+notifications:
+  enabled: false                # Enable email/SMS notifications
+  
+  # Email settings (if enabled)
+  email:
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    from_address: "platform@yourbank.com"
+    to_addresses: []            # List of recipient emails
+    
+  # Alert triggers
+  alerts:
+    training_complete: true     # Alert when training completes
+    training_failed: true       # Alert on training failure
+    low_performance: true       # Alert if model performance drops
+    performance_threshold: 0.7  # Minimum R² score before alerting
+
+# ============================================================================
+# DATA PRIVACY & SECURITY
+# ============================================================================
+security:
+  # Data encryption
+  encryption:
+    enabled: false              # Encrypt sensitive data at rest
+    algorithm: "AES-256"
+    
+  # Access control
+  access_control:
+    require_authentication: false   # Require login for dashboard
+    allowed_users: []                # List of authorized users
+    
+  # Audit logging
+  audit:
+    log_data_access: true       # Log all data access
+    log_predictions: true       # Log all prediction requests
+    retention_days: 90          # Keep audit logs for 90 days
+  
+  # Data anonymization
+  anonymization:
+    enabled: false              # Anonymize census tracts in outputs
+    hash_census_tracts: false   # Use hashed IDs instead of actual tracts
+
+# ============================================================================
+# INTEGRATION OPTIONS
+# ============================================================================
+integration:
+  # Database connection (optional)
+  database:
+    enabled: false
+    type: "postgresql"          # Options: postgresql, mysql, sqlite
+    host: "localhost"
+    port: 5432
+    name: "lending_db"
+    user: "dbuser"
+    # password should be in environment variable: DB_PASSWORD
+  
+  # API endpoints (optional)
+  api:
+    enabled: false
+    host: "0.0.0.0"
+    port: 8000
+    enable_cors: true
+    cors_origins: ["*"]
+  
+  # External data sources (optional)
+  external_sources:
+    enabled: false
+    sources:
+      - name: "additional_hpi"
+        url: "https://api.example.com/hpi"
+        api_key_env: "HPI_API_KEY"
+        update_frequency: "monthly"
+
+# ============================================================================
+# EXPERIMENTAL FEATURES
+# ============================================================================
+experimental:
+  # Time series forecasting
+  forecasting:
+    enabled: false              # Predict future opportunity scores
+    horizon: 4                  # Quarters to forecast
+    model: "prophet"            # Options: prophet, arima, lstm
+  
+  # Geographic clustering
+  clustering:
+    enabled: false              # Group similar census tracts
+    n_clusters: 5               # Number of clusters
+    method: "kmeans"            # Options: kmeans, dbscan, hierarchical
+  
+  # Explainable AI
+  explainability:
+    enabled: false              # Generate SHAP/LIME explanations
+    method: "shap"              # Options: shap, lime
+    n_samples: 100              # Number of samples to explain
+  
+  # A/B testing
+  ab_testing:
+    enabled: false              # Compare different model versions
+    test_pct: 0.1               # Percentage for test group
+
+# ============================================================================
+# CUSTOM SETTINGS FOR YOUR INSTITUTION
+# ============================================================================
+institution:
+  # Your bank information
+  name: "Community Bank XYZ"
+  charter_number: ""
+  primary_markets: []           # List of primary market counties
+  
+  # Business strategy
+  strategy:
+    focus_areas:                # Priority areas for expansion
+      - "low_competition"       # Target underserved markets
+      - "high_growth"           # Target growing markets
+      - "cra_qualified"         # Target CRA-qualifying areas
+    
+    risk_appetite: "moderate"   # Options: conservative, moderate, aggressive
+    
+    product_mix:                # Products to consider in analysis
+      - "purchase_mortgages"
+      - "refinance"
+      - "home_equity"
+  
+  # Operational constraints
+  constraints:
+    max_distance_miles: 50      # Maximum distance from branches
+    min_market_size: 20         # Minimum viable market size
+    branch_locations: []        # List of branch coordinates [lat, lon]
+
+# ============================================================================
+# VERSION CONTROL
+# ============================================================================
+version_control:
+  track_model_versions: true    # Keep history of model versions
+  max_versions: 10              # Maximum model versions to retain
+  
+  track_data_versions: true     # Track data snapshots
+  snapshot_frequency: "monthly" # How often to snapshot data
+  
+  track_config_versions: true   # Track configuration changes
+  require_change_log: false     # Require notes for config changes
+
+# ============================================================================
+# NOTES
+# ============================================================================
+# Configuration best practices:
+# 1. Always backup this file before making changes
+# 2. Test changes in development environment first
+# 3. Document why you changed specific parameters
+# 4. Review and update quarterly based on model performance
+# 5. Keep sensitive information (passwords, API keys) in environment variables
+#
+# For help, see: README.md and DEPLOYMENT.md
+# ============================================================================

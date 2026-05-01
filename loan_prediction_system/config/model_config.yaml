@@ -1,0 +1,217 @@
+# Model Configuration for Loan Prediction System
+# Production-grade configuration with best practices
+
+# Data Configuration
+data:
+  input_file: "../data/generated/synthetic_loan_data_20251006_150042.csv"
+  test_size: 0.2
+  validation_size: 0.1
+  random_state: 42
+  stratify_column: "action_taken"
+
+# Feature Engineering Configuration
+features:
+  # Core financial features
+  core_features:
+    - "income"
+    - "loan_amount" 
+    - "property_value"
+    - "loan_to_value_ratio"
+    - "debt_to_income_ratio"
+    - "credit_score"
+    - "activity_year"
+  
+  # Derived features to create
+  derived_features:
+    - "loan_to_income_ratio"
+    - "property_to_income_ratio" 
+    - "credit_score_category"
+    - "income_category"
+    - "risk_score"
+    - "loan_amount_category"
+  
+  # Feature scaling
+  scaling:
+    method: "standard"  # standard, minmax, robust
+    features_to_scale:
+      - "income"
+      - "loan_amount"
+      - "property_value"
+      - "loan_to_value_ratio"
+      - "debt_to_income_ratio"
+      - "credit_score"
+      - "loan_to_income_ratio"
+      - "property_to_income_ratio"
+      - "risk_score"
+
+# Model Configuration for Loan Outcome Prediction
+loan_outcome_model:
+  algorithm: "random_forest"  # random_forest, xgboost, lightgbm, logistic_regression
+  
+  # Random Forest Parameters
+  random_forest:
+    n_estimators: 200
+    max_depth: 15
+    min_samples_split: 10
+    min_samples_leaf: 5
+    max_features: "sqrt"
+    class_weight: "balanced"
+    random_state: 42
+    n_jobs: -1
+  
+  # XGBoost Parameters (alternative)
+  xgboost:
+    n_estimators: 200
+    max_depth: 8
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    scale_pos_weight: 1.5
+    random_state: 42
+    n_jobs: -1
+  
+  # LightGBM Parameters (alternative)
+  lightgbm:
+    n_estimators: 200
+    max_depth: 8
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    class_weight: "balanced"
+    random_state: 42
+    n_jobs: -1
+  
+  # Logistic Regression Parameters (alternative)
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    class_weight: "balanced"
+    random_state: 42
+    n_jobs: -1
+
+# Model Configuration for Denial Reason Prediction
+denial_reason_model:
+  algorithm: "random_forest"  # random_forest, xgboost, lightgbm
+  
+  # Random Forest Parameters
+  random_forest:
+    n_estimators: 150
+    max_depth: 12
+    min_samples_split: 8
+    min_samples_leaf: 4
+    max_features: "sqrt"
+    class_weight: "balanced"
+    random_state: 42
+    n_jobs: -1
+  
+  # XGBoost Parameters (alternative)
+  xgboost:
+    n_estimators: 150
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    random_state: 42
+    n_jobs: -1
+
+# Model Training Configuration
+training:
+  cross_validation:
+    enabled: true
+    cv_folds: 5
+    scoring: "f1_weighted"
+  
+  hyperparameter_tuning:
+    enabled: true
+    method: "optuna"  # optuna, grid_search, random_search
+    cv_folds: 3
+    n_iter: 50  # for random search
+    
+    # Optuna-specific settings
+    optuna:
+      n_trials: 100
+      timeout: 3600  # 1 hour timeout
+      n_jobs: 1  # parallel jobs (be careful with memory)
+      pruning: true  # enable early stopping of poor trials
+      sampler: "tpe"  # tpe, random, cmaes
+      
+      # Study storage (optional - for persistent studies)
+      # storage: "sqlite:///optuna_studies.db"
+  
+  early_stopping:
+    enabled: true
+    patience: 10
+    monitor: "validation_loss"
+
+# Model Evaluation Configuration
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+    - "confusion_matrix"
+    - "classification_report"
+  
+  threshold_optimization:
+    enabled: true
+    metric: "f1_score"
+
+# Model Persistence Configuration
+persistence:
+  model_dir: "./models"
+  model_format: "joblib"  # joblib, pickle
+  version_control: true
+  compression: true
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "./logs/model_training.log"
+  console: true
+
+# Dashboard Configuration
+dashboard:
+  title: "Loan Outcome Prediction System"
+  port: 8501
+  theme: "light"
+  
+  # Input validation
+  validation:
+    income:
+      min: 10
+      max: 1000
+    loan_amount:
+      min: 10000
+      max: 5000000
+    property_value:
+      min: 15000
+      max: 10000000
+    credit_score:
+      min: 300
+      max: 850
+    debt_to_income_ratio:
+      min: 0
+      max: 100
+    loan_to_value_ratio:
+      min: 10
+      max: 100
+
+# Production Configuration
+production:
+  model_monitoring:
+    enabled: true
+    drift_detection: true
+    performance_threshold: 0.8
+  
+  api:
+    rate_limiting: true
+    authentication: false
+    logging: true
+  
+  deployment:
+    containerized: true
+    auto_scaling: true
+    health_checks: true

@@ -1,0 +1,53 @@
+# ====================================
+# Loan Prediction System
+# Automated Loan Decisioning Platform
+# ====================================
+
+# Core Data Science Libraries
+pandas>=1.5.0,<2.0.0
+numpy>=1.21.0,<2.0.0
+scikit-learn>=1.1.0,<2.0.0
+scipy>=1.9.0
+
+# Machine Learning Libraries
+xgboost>=1.6.0,<2.0.0
+lightgbm>=3.3.0
+
+# Hyperparameter Optimization
+optuna>=3.0.0,<4.0.0
+
+# Imbalanced Learning
+imbalanced-learn>=0.11.0
+
+# Data Visualization
+plotly>=5.10.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Dashboard Framework
+streamlit>=1.20.0,<2.0.0
+
+# Model Persistence
+joblib>=1.2.0
+
+# Configuration Management
+pyyaml>=6.0
+python-dotenv>=0.19.0
+
+# Utilities
+python-dateutil>=2.8.0
+tqdm>=4.60.0
+
+# Logging
+loguru>=0.6.0
+
+# Development and Testing (Optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
+
+# Production API (Optional - for future deployment)
+fastapi>=0.85.0
+uvicorn>=0.18.0
+gunicorn>=20.1.0

@@ -1,0 +1,56 @@
+# ====================================
+# Financial AI Platform - Main Application
+# Market Opportunity & Temporal Forecasting
+# ====================================
+
+# Core Data Science Libraries
+pandas>=1.5.0,<2.0.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0,<2.0.0
+scipy>=1.10.0
+
+# Machine Learning
+xgboost>=1.7.0,<2.0.0
+lightgbm>=4.0.0
+imbalanced-learn>=0.11.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# Dashboard Framework
+streamlit>=1.25.0,<2.0.0
+
+# Geographic and Spatial Analysis
+geopandas>=0.13.0
+folium>=0.14.0
+streamlit-folium>=0.13.0
+shapely>=2.0.0
+
+# Configuration and Utilities
+pyyaml>=6.0
+python-dotenv>=1.0.0
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# Performance and Processing
+joblib>=1.3.0
+tqdm>=4.65.0
+
+# Logging
+loguru>=0.7.0
+
+# Data Export (Optional)
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+
+# PDF Generation (for reports)
+markdown>=3.4.0
+weasyprint>=59.0
+pygments>=2.15.0
+
+# Development and Testing (Optional)
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.0.0

@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  financial-ai-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: financial-ai-dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount data directories to persist data
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - STREAMLIT_SERVER_FILE_WATCHER_TYPE=poll
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Loan Prediction System
+  loan-prediction:
+    build:
+      context: ./loan_prediction_system
+      dockerfile: Dockerfile
+    container_name: loan-prediction
+    ports:
+      - "8502:8502"
+    volumes:
+      - ./loan_prediction_system/models:/app/models
+      - ./loan_prediction_system/logs:/app/logs
+      - ./loan_prediction_system/data:/app/data
+    environment:
+      - STREAMLIT_SERVER_PORT=8502
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8502/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: YoY Analysis standalone service
+  yoy-analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yoy-analysis
+    ports:
+      - "8503:8501"  # Map host port 8503 to container port 8501
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+    command: ["streamlit", "run", "src/enhanced_yoy_dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    restart: unless-stopped
+    profiles:
+      - yoy  # Only start with: docker-compose --profile yoy up
+
+networks:
+  default:
+    name: financial-ai-network

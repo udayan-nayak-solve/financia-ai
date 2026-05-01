@@ -6,8 +6,19 @@ Handles loading and validation of configuration files
 import yaml
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 import logging
+
+
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+
+
+def resolve_package_path(path: Union[str, Path]) -> Path:
+    """Resolve a path against the package root unless it's already absolute."""
+    p = Path(path)
+    if p.is_absolute():
+        return p
+    return (PACKAGE_ROOT / p).resolve()
 
 
 class ConfigManager:
@@ -152,18 +163,15 @@ def setup_logging(config: ConfigManager):
         config: Configuration manager instance
     """
     log_config = config.get('logging', {})
-    
-    # Create logs directory if it doesn't exist
-    log_file = log_config.get('file', './logs/model_training.log')
-    log_dir = Path(log_file).parent
-    log_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Configure logging
+
+    log_file = resolve_package_path(log_config.get('file', './logs/model_training.log'))
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
     logging.basicConfig(
         level=getattr(logging, log_config.get('level', 'INFO')),
         format=log_config.get('format', '%(asctime)s - %(name)s - %(levelname)s - %(message)s'),
         handlers=[
-            logging.FileHandler(log_file),
+            logging.FileHandler(str(log_file)),
             logging.StreamHandler() if log_config.get('console', True) else logging.NullHandler()
         ]
     )

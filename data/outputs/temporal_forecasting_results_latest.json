@@ -1,0 +1,54 @@
+{
+  "success": true,
+  "timestamp": "2025-10-08T18:17:20.267176",
+  "yearly_data_loaded": 3,
+  "models_trained": 3,
+  "predictions_generated": 2,
+  "timeline_records": 2427,
+  "summary": {
+    "training_years": [
+      2022,
+      2023,
+      2024
+    ],
+    "prediction_years": [
+      2025,
+      2026
+    ],
+    "models_performance": {
+      "2022": {
+        "best_model": "xgboost",
+        "r2_score": 0.992,
+        "mae": 0.226
+      },
+      "2023": {
+        "best_model": "xgboost",
+        "r2_score": 0.99,
+        "mae": 0.508
+      },
+      "2024": {
+        "best_model": "xgboost",
+        "r2_score": 0.989,
+        "mae": 0.458
+      }
+    },
+    "prediction_summary": {
+      "2025": {
+        "census_tracts": 809,
+        "avg_predicted_score": "63.09",
+        "score_range": [
+          "28.19",
+          "87.7"
+        ]
+      },
+      "2026": {
+        "census_tracts": 809,
+        "avg_predicted_score": "63.23",
+        "score_range": [
+          "27.45",
+          "87.71"
+        ]
+      }
+    }
+  }
+}

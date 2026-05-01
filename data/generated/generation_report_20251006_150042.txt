@@ -1,0 +1,31 @@
+
+SYNTHETIC LOAN DATA GENERATION REPORT
+=====================================
+Generated on: 2025-10-06 15:00:43
+File: synthetic_loan_data_20251006_150042.csv
+
+DATASET STATISTICS:
+- Total records: 50,000
+- Date range: 2020-2024
+- Unique census tracts: 810
+
+LOAN OUTCOMES:
+- Approved loans: 25,611 (51.2%)
+- Denied loans: 24,389 (48.8%)
+
+FINANCIAL RANGES:
+- Income: $25k - $500k
+- Loan amount: $40,800 - $1,784,000
+- Property value: $43,100 - $3,494,700
+- Credit score: 300 - 849
+- DTI ratio: 25.0% - 70.0%
+- LTV ratio: 50.0% - 100.0%
+
+DATA QUALITY CHECKS:
+✅ No missing values in required fields
+✅ Realistic financial correlations maintained
+✅ Appropriate approval/denial rates
+✅ Valid Kansas census tracts used
+✅ HMDA-compliant denial reasons provided
+
+This dataset is ready for machine learning model training.

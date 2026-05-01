@@ -14,7 +14,7 @@ import sys
 # Add src to path
 sys.path.append(str(Path(__file__).parent))
 
-from config_manager import get_config
+from config_manager import get_config, resolve_package_path
 from data_processor import DataProcessor
 from model_trainer import ModelManager
 
@@ -32,10 +32,9 @@ class PredictionService:
         self.config = get_config()
         self.logger = logging.getLogger(__name__)
         
-        # Set model directory
         if model_dir is None:
             model_dir = self.config.get('persistence.model_dir', './models')
-        self.model_dir = Path(model_dir)
+        self.model_dir = resolve_package_path(model_dir)
         
         # Initialize components
         self.data_processor = DataProcessor()
